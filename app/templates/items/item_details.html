@@ -1,0 +1,426 @@
+{% extends "base.html" %}
+
+{% block title %}{{ item.title }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- Breadcrumb -->
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb small">
+      <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}" class="text-teal text-decoration-none">Home</a></li>
+      <li class="breadcrumb-item"><a href="{{ url_for('items.browse') }}" class="text-teal text-decoration-none">Catalog</a></li>
+      <li class="breadcrumb-item"><a href="{{ url_for('items.browse', category=item.category.slug) }}" class="text-teal text-decoration-none">{{ item.category.name }}</a></li>
+      <li class="breadcrumb-item active text-truncate" style="max-width: 250px;" aria-current="page">{{ item.title }}</li>
+    </ol>
+  </nav>
+
+  <div class="row g-4">
+    <!-- Left Column: Image & Details -->
+    <div class="col-lg-7">
+      <div class="card card-custom p-3 mb-4 overflow-hidden">
+        <div style="background-color: #f8fafc; border-radius: var(--radius-sm); overflow: hidden; max-height: 440px; display: flex; align-items: center; justify-content: center;">
+          <img id="mainItemImage" src="{{ item.primary_image_url }}" alt="{{ item.title }}" class="img-fluid w-100" style="object-fit: contain; max-height: 440px;" onerror="this.onerror=null;this.src='{{ url_for('static', filename='images/item_placeholder.svg') }}';">
+        </div>
+
+        {% if item.images and item.images|length > 1 %}
+          <div class="d-flex gap-2 mt-3 overflow-auto pb-1">
+            {% for img in item.images %}
+              <img src="{{ img.image_url }}" class="rounded border thumbnail-img" style="width: 70px; height: 70px; object-fit: cover; cursor: pointer; transition: transform 0.2s ease;" alt="Thumbnail" onclick="document.getElementById('mainItemImage').src = this.src;" onerror="this.onerror=null;this.src='{{ url_for('static', filename='images/item_placeholder.svg') }}';">
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Description Card -->
+      <div class="card card-custom p-4 mb-4">
+        <h5 class="fw-bold text-dark mb-3">Item Description</h5>
+        <div class="text-secondary mb-4" style="line-height: 1.7; white-space: pre-line;">
+          {{ item.description }}
+        </div>
+
+        {% if item.borrowing_rules %}
+          <div class="p-3 bg-light rounded-3 border-start border-4 border-teal mb-3">
+            <h6 class="fw-bold text-dark mb-1"><i class="bi bi-shield-exclamation text-teal me-1"></i> Owner's Borrowing Guidelines</h6>
+            <p class="small text-muted mb-0">{{ item.borrowing_rules }}</p>
+          </div>
+        {% endif %}
+
+        {% if item.tags %}
+          <div class="d-flex flex-wrap gap-1 mt-3">
+            <span class="small text-muted me-1">Tags:</span>
+            {% for tag in item.tags.split(',') %}
+              {% if tag.strip() %}
+                <span class="badge bg-light text-secondary border small">#{{ tag.strip() }}</span>
+              {% endif %}
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Right Column: Pricing, Owner Info & Actions -->
+    <div class="col-lg-5">
+      <div class="card card-custom p-4 mb-4 shadow-sm">
+        <!-- Badges -->
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="badge {% if item.listing_type == 'borrow' %}badge-borrow{% elif item.listing_type == 'sell' %}badge-sell{% else %}badge-both{% endif %} px-3 py-1">
+            {% if item.listing_type == 'borrow' %}
+              <i class="bi bi-arrow-repeat me-1"></i> Available to Borrow
+            {% elif item.listing_type == 'sell' %}
+              <i class="bi bi-tag-fill me-1"></i> Secondhand Sale
+            {% else %}
+              <i class="bi bi-shuffle me-1"></i> Borrow or Buy
+            {% endif %}
+          </span>
+          <span class="badge bg-light text-dark border">{{ item.condition }}</span>
+        </div>
+
+        <!-- Title -->
+        <h3 class="fw-bold text-dark mb-2">{{ item.title }}</h3>
+
+        <div class="small text-muted d-flex align-items-center gap-3 mb-3">
+          <span><i class="bi {{ item.category.icon }} text-teal me-1"></i> {{ item.category.name }}</span>
+          <span><i class="bi bi-geo-alt-fill text-teal me-1"></i> {{ item.location }}</span>
+          <span><i class="bi bi-eye me-1"></i> {{ item.views_count }} views</span>
+        </div>
+
+        <hr class="my-3">
+
+        <!-- Pricing Blocks -->
+        <div class="row g-2 mb-4">
+          {% if item.listing_type in ('borrow', 'both') %}
+            <div class="{% if item.listing_type == 'both' %}col-6{% else %}col-12{% endif %}">
+              <div class="p-3 bg-light rounded-3 border text-center h-100">
+                <span class="text-muted small fw-semibold d-block mb-1">Rental Fee</span>
+                <span class="fs-4 fw-bold text-teal">
+                  {% if item.borrowing_fee > 0 %}₹{{ item.borrowing_fee|int }}<small class="fs-6 text-muted fw-normal">/day</small>{% else %}Free{% endif %}
+                </span>
+                {% if item.deposit > 0 %}
+                  <div class="small text-muted mt-1" style="font-size: 0.75rem;">Deposit: ₹{{ item.deposit|int }}</div>
+                {% endif %}
+              </div>
+            </div>
+          {% endif %}
+
+          {% if item.listing_type in ('sell', 'both') and item.selling_price %}
+            <div class="{% if item.listing_type == 'both' %}col-6{% else %}col-12{% endif %}">
+              <div class="p-3 bg-light rounded-3 border text-center h-100">
+                <span class="text-muted small fw-semibold d-block mb-1">Selling Price</span>
+                <span class="fs-4 fw-bold text-dark">₹{{ item.selling_price|int }}</span>
+                <div class="small text-muted mt-1" style="font-size: 0.75rem;">
+                  {% if item.negotiable %}
+                    <span class="text-success"><i class="bi bi-check2"></i> Negotiable</span>
+                  {% else %}
+                    Fixed Price
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Action Buttons -->
+        {% if current_user.is_authenticated and (current_user.id == item.owner_id or current_user.is_admin) %}
+          <!-- Owner Actions -->
+          <div class="d-flex flex-column gap-2 mb-3">
+            <a href="{{ url_for('items.edit_item', item_id=item.id) }}" class="btn btn-outline-custom w-100">
+              <i class="bi bi-pencil-square me-1"></i> Edit Listing
+            </a>
+            <button type="button" class="btn btn-outline-danger w-100" data-bs-toggle="modal" data-bs-target="#deleteItemModal">
+              <i class="bi bi-trash me-1"></i> Delete Listing
+            </button>
+          </div>
+        {% else %}
+          <!-- Visitor Actions -->
+          <div class="d-flex flex-column gap-2 mb-3">
+            {% if item.is_available_for_borrow %}
+              <button type="button" class="btn btn-primary-custom py-2" data-bs-toggle="modal" data-bs-target="#borrowRequestModal">
+                <i class="bi bi-arrow-repeat me-1"></i> Request to Borrow
+              </button>
+            {% endif %}
+
+            {% if item.is_available_for_sale %}
+              <button type="button" class="btn btn-warning py-2 text-dark fw-bold" data-bs-toggle="modal" data-bs-target="#purchaseRequestModal">
+                <i class="bi bi-bag-check me-1"></i> Send Purchase Request
+              </button>
+              {% if item.negotiable %}
+                <button type="button" class="btn btn-outline-secondary py-2" data-bs-toggle="modal" data-bs-target="#offerModal">
+                  <i class="bi bi-cash-stack me-1"></i> Make an Offer
+                </button>
+              {% endif %}
+            {% endif %}
+
+            {% if current_user.is_authenticated %}
+              <a href="{{ url_for('items.toggle_wishlist', item_id=item.id) }}" class="btn btn-light border py-2 text-secondary">
+                <i class="bi {% if is_wishlisted %}bi-heart-fill text-danger{% else %}bi-heart text-muted{% endif %} me-1"></i>
+                {% if is_wishlisted %}Saved in Wishlist{% else %}Save to Wishlist{% endif %}
+              </a>
+            {% else %}
+              <a href="{{ url_for('auth.login', next=request.path) }}" class="btn btn-outline-custom py-2">
+                <i class="bi bi-box-arrow-in-right me-1"></i> Sign In to Borrow or Buy
+              </a>
+            {% endif %}
+          </div>
+        {% endif %}
+
+        <!-- Owner Profile Card -->
+        <div class="p-3 bg-light rounded-3 border mt-2">
+          <div class="small text-muted fw-bold mb-2 text-uppercase" style="letter-spacing: 0.5px;">Listed by Member</div>
+          <div class="d-flex align-items-center gap-3">
+            <img src="{{ item.owner.avatar_url }}" alt="{{ item.owner.full_name }}" class="avatar-sm rounded-circle" style="width: 48px; height: 48px;">
+            <div class="flex-grow-1">
+              <div class="fw-bold text-dark">{{ item.owner.full_name }}</div>
+              <div class="small text-muted">{{ item.owner.college_or_community }}</div>
+            </div>
+            <div class="text-end">
+              <span class="badge-trust px-2 py-1" title="Platform TrustScore">
+                <i class="bi bi-shield-check text-success"></i> {{ item.owner.trust_score|round(0)|int }}
+              </span>
+            </div>
+          </div>
+
+          <div class="mt-3 pt-2 border-top d-flex justify-content-between align-items-center small">
+            <span class="text-muted"><i class="bi bi-clock me-1"></i> Listed {{ item.created_at.strftime('%b %d, %Y') }}</span>
+            <button type="button" class="btn btn-link btn-sm text-teal text-decoration-none p-0 fw-semibold" data-bs-toggle="modal" data-bs-target="#contactModal">
+              <i class="bi bi-chat-text me-1"></i> Contact Owner
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Similar Items Section -->
+  {% if similar_items %}
+    <div class="mt-5 pt-3 border-top">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h4 class="fw-bold text-dark mb-1"><i class="bi bi-stars text-warning me-1"></i> Similar Reusable Items</h4>
+          <p class="text-muted small mb-0">Recommended based on category and peer demand</p>
+        </div>
+        <a href="{{ url_for('items.browse', category=item.category.slug) }}" class="btn btn-sm btn-outline-custom">
+          View All in {{ item.category.name }}
+        </a>
+      </div>
+
+      <div class="row g-3">
+        {% for sim in similar_items %}
+          <div class="col-lg-3 col-md-6 col-sm-6">
+            <div class="card card-custom h-100 overflow-hidden">
+              <a href="{{ url_for('items.item_details', item_id=sim.id) }}">
+                <img src="{{ sim.primary_image_url }}" alt="{{ sim.title }}" class="w-100" style="height: 140px; object-fit: cover;" onerror="this.onerror=null;this.src='{{ url_for('static', filename='images/item_placeholder.svg') }}';">
+              </a>
+              <div class="card-body p-3 d-flex flex-column">
+                <div class="small text-muted mb-1">{{ sim.condition }}</div>
+                <h6 class="fw-bold text-truncate mb-1">
+                  <a href="{{ url_for('items.item_details', item_id=sim.id) }}" class="text-dark text-decoration-none">
+                    {{ sim.title }}
+                  </a>
+                </h6>
+                <div class="mt-auto pt-2 d-flex justify-content-between align-items-center small">
+                  <span class="fw-bold text-teal">
+                    {% if sim.listing_type in ('sell', 'both') and sim.selling_price %}
+                      ₹{{ sim.selling_price|int }}
+                    {% elif sim.borrowing_fee > 0 %}
+                      ₹{{ sim.borrowing_fee|int }}/day
+                    {% else %}
+                      Free Borrow
+                    {% endif %}
+                  </span>
+                  <a href="{{ url_for('items.item_details', item_id=sim.id) }}" class="btn btn-sm btn-outline-custom py-0 px-2">
+                    View
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+</div>
+
+<!-- ================= MODALS ================= -->
+
+<!-- 1. Borrow Request Modal -->
+{% if item.is_available_for_borrow %}
+<div class="modal fade" id="borrowRequestModal" tabindex="-1" aria-labelledby="borrowModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg" style="border-radius: var(--radius-md);">
+      <div class="modal-header bg-teal text-white" style="background-color: var(--primary-color);">
+        <h5 class="modal-title fw-bold" id="borrowModalLabel"><i class="bi bi-arrow-repeat me-1"></i> Request to Borrow</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form action="{{ url_for('items.create_borrow_request', item_id=item.id) }}" method="POST">
+        {{ borrow_form.hidden_tag() }}
+        <div class="modal-body p-4">
+          <div class="alert alert-light border small mb-3">
+            <strong>Item:</strong> {{ item.title }}<br>
+            <strong>Rate:</strong> ₹{{ item.borrowing_fee|int }}/day &bull; <strong>Deposit:</strong> ₹{{ item.deposit|int }} &bull; <strong>Max:</strong> {{ item.borrowing_duration_max_days }} days
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-6">
+              <label class="form-label small fw-bold">Start Date</label>
+              {{ borrow_form.start_date(class="form-control form-control-sm", id="borrowStart") }}
+            </div>
+            <div class="col-6">
+              <label class="form-label small fw-bold">End Date</label>
+              {{ borrow_form.end_date(class="form-control form-control-sm", id="borrowEnd") }}
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Note for {{ item.owner.full_name }} (Optional)</label>
+            {{ borrow_form.notes(class="form-control form-control-sm") }}
+          </div>
+        </div>
+        <div class="modal-footer bg-light">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+          {{ borrow_form.submit(class="btn btn-primary-custom btn-sm") }}
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- 2. Purchase Request Modal -->
+{% if item.is_available_for_sale %}
+<div class="modal fade" id="purchaseRequestModal" tabindex="-1" aria-labelledby="purchaseModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg" style="border-radius: var(--radius-md);">
+      <div class="modal-header bg-dark text-white">
+        <h5 class="modal-title fw-bold" id="purchaseModalLabel"><i class="bi bi-bag-check me-1"></i> Send Purchase Request</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form action="{{ url_for('items.create_purchase_request', item_id=item.id) }}" method="POST">
+        {{ purchase_form.hidden_tag() }}
+        <div class="modal-body p-4">
+          <div class="alert alert-light border small mb-3">
+            Confirm your purchase request for <strong>{{ item.title }}</strong> listed by {{ item.owner.full_name }}.
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Agreed Purchase Price (₹)</label>
+            {{ purchase_form.proposed_price(class="form-control") }}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Message to Seller</label>
+            {{ purchase_form.message(class="form-control") }}
+          </div>
+        </div>
+        <div class="modal-footer bg-light">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+          {{ purchase_form.submit(class="btn btn-primary-custom btn-sm") }}
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- 3. Offer Modal -->
+{% if item.is_available_for_sale and item.selling_price %}
+<div class="modal fade" id="offerModal" tabindex="-1" aria-labelledby="offerModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg" style="border-radius: var(--radius-md);">
+      <div class="modal-header bg-warning text-dark">
+        <h5 class="modal-title fw-bold" id="offerModalLabel"><i class="bi bi-cash-stack me-1"></i> Make an Offer</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form action="{{ url_for('items.make_offer', item_id=item.id) }}" method="POST">
+        {{ offer_form.hidden_tag() }}
+        <div class="modal-body p-4">
+          <div class="alert alert-light border small mb-3">
+            Listed Price: <strong>₹{{ item.selling_price|int }}</strong>. Propose a reasonable secondhand offer to {{ item.owner.full_name }}.
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Your Offer Amount (₹)</label>
+            {{ offer_form.offer_amount(class="form-control", placeholder="e.g. " ~ (item.selling_price * 0.85)|round|int) }}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Reason / Note (Optional)</label>
+            {{ offer_form.message(class="form-control") }}
+          </div>
+        </div>
+        <div class="modal-footer bg-light">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+          {{ offer_form.submit(class="btn btn-warning btn-sm fw-bold text-dark") }}
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- 4. Contact Modal -->
+<div class="modal fade" id="contactModal" tabindex="-1" aria-labelledby="contactModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg" style="border-radius: var(--radius-md);">
+      <div class="modal-header bg-light">
+        <h5 class="modal-title fw-bold text-dark" id="contactModalLabel"><i class="bi bi-chat-text text-teal me-1"></i> Contact {{ item.owner.full_name }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+        <p class="small text-muted mb-3">
+          To protect campus safety and privacy, exchange arrangements are coordinated via verified requests:
+        </p>
+
+        <ul class="list-group list-group-flush small border rounded">
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-buildings text-teal me-2"></i> Campus Block:</span>
+            <strong>{{ item.owner.college_or_community }}</strong>
+          </li>
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-geo-alt text-teal me-2"></i> Suggested Meetup:</span>
+            <strong>{{ item.location }}</strong>
+          </li>
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-chat-dots text-teal me-2"></i> Preferred Contact:</span>
+            <span class="badge bg-light text-dark border text-uppercase">{{ item.owner.contact_preference }}</span>
+          </li>
+          {% if current_user.is_authenticated and item.owner.phone and item.owner.contact_preference in ('phone', 'direct') %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <span><i class="bi bi-telephone text-teal me-2"></i> Phone / WhatsApp:</span>
+              <strong>{{ item.owner.phone }}</strong>
+            </li>
+          {% endif %}
+        </ul>
+      </div>
+      <div class="modal-footer bg-light">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 5. Delete Item Confirmation Modal -->
+{% if current_user.is_authenticated and (current_user.id == item.owner_id or current_user.is_admin) %}
+<div class="modal fade" id="deleteItemModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg" style="border-radius: var(--radius-md);">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title fw-bold" id="deleteModalLabel"><i class="bi bi-exclamation-triangle-fill me-1"></i> Delete Listing</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4 text-center">
+        <i class="bi bi-trash text-danger fs-1 mb-2 d-block"></i>
+        <h6 class="fw-bold text-dark">Are you sure you want to remove this listing?</h6>
+        <p class="small text-muted mb-0">"{{ item.title }}" will be permanently removed from the catalog.</p>
+      </div>
+      <div class="modal-footer bg-light">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Keep Listing</button>
+        <form action="{{ url_for('items.delete_item', item_id=item.id) }}" method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-danger btn-sm">Yes, Delete Listing</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

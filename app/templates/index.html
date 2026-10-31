@@ -1,0 +1,308 @@
+{% extends "base.html" %}
+
+{% block title %}Borrow. Lend. Sell. Reuse.{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section text-center">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-9 col-md-11">
+        <div class="hero-pill">
+          <i class="bi bi-stars text-warning"></i> Campus & Community Circular Economy
+        </div>
+        <h1 class="hero-title">
+          Borrow, Lend & Sell.<br>
+          <span style="color: #5eead4;">Reuse Instead of Buying New.</span>
+        </h1>
+        <p class="hero-subtitle mx-auto mb-4">
+          Save money, reduce campus e-waste, and share textbooks, calculators, lab gear, and tech with fellow students in a verified, high-trust network.
+        </p>
+
+        <!-- Search Bar -->
+        <div class="card p-2 shadow-lg border-0 mb-4 mx-auto" style="max-width: 680px; border-radius: var(--radius-pill);">
+          <form action="{{ url_for('items.browse') }}" method="GET" class="d-flex align-items-center gap-2">
+            <span class="ps-3 text-teal"><i class="bi bi-search fs-5"></i></span>
+            <input type="text" name="q" class="form-control border-0 shadow-none px-2" placeholder="Search textbooks, calculators, sports gear..." style="font-size: 0.95rem;">
+            <button type="submit" class="btn btn-primary-custom px-4" style="border-radius: var(--radius-pill);">
+              Search
+            </button>
+          </form>
+        </div>
+
+        <!-- CTA Buttons -->
+        <div class="d-flex flex-wrap justify-content-center gap-3">
+          {% if current_user.is_authenticated %}
+            <a href="{{ url_for('items.browse') }}" class="btn btn-light fw-bold px-4 py-2" style="border-radius: var(--radius-sm);">
+              <i class="bi bi-grid me-2 text-teal"></i> Browse Campus Catalog
+            </a>
+            <a href="{{ url_for('items.add_item') }}" class="btn btn-outline-light px-4 py-2" style="border-radius: var(--radius-sm);">
+              <i class="bi bi-plus-circle me-2"></i> List an Item
+            </a>
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-light px-4 py-2" style="border-radius: var(--radius-sm);">
+              <i class="bi bi-speedometer2 me-2"></i> My Dashboard
+            </a>
+          {% else %}
+            <a href="{{ url_for('items.browse') }}" class="btn btn-light fw-bold px-4 py-2 text-teal" style="border-radius: var(--radius-sm);">
+              <i class="bi bi-grid me-2"></i> Browse Items
+            </a>
+            <a href="{{ url_for('auth.register') }}" class="btn btn-outline-light px-4 py-2" style="border-radius: var(--radius-sm);">
+              <i class="bi bi-person-plus me-2"></i> Register Free
+            </a>
+            <a href="{{ url_for('auth.login') }}" class="btn btn-outline-light px-4 py-2" style="border-radius: var(--radius-sm);">
+              <i class="bi bi-box-arrow-in-right me-2"></i> Sign In
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Browse by Category Section -->
+<section class="py-5 bg-white">
+  <div class="container">
+    <div class="text-center mb-5">
+      <span class="badge bg-teal-subtle text-teal fw-bold text-uppercase px-3 py-2 mb-2" style="letter-spacing: 1px;">Categories</span>
+      <h2 class="fw-bold text-dark">Explore Campus Essentials</h2>
+      <p class="text-muted small">Find items available for borrowing or secondhand purchase right on your campus</p>
+    </div>
+
+    <div class="row g-3">
+      {% if categories %}
+        {% for cat in categories %}
+          <div class="col-lg-2 col-md-3 col-sm-4 col-6">
+            <a href="{{ url_for('items.browse', category=cat.slug) }}" class="category-card h-100">
+              <div class="category-icon">
+                <i class="bi {{ cat.icon }}"></i>
+              </div>
+              <h6 class="fw-bold mb-1" style="font-size: 0.92rem;">{{ cat.name }}</h6>
+              <span class="text-muted small" style="font-size: 0.75rem;">{{ cat.items|length }} listings</span>
+            </a>
+          </div>
+        {% endfor %}
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<!-- Featured Campus Listings Section -->
+<section class="py-5 bg-main border-top">
+  <div class="container">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+      <div>
+        <span class="badge bg-teal-subtle text-teal fw-bold text-uppercase px-3 py-2 mb-2" style="letter-spacing: 1px;">Fresh Arrivals</span>
+        <h2 class="fw-bold text-dark mb-0">Featured Campus Listings</h2>
+      </div>
+      <div class="d-flex gap-2">
+        <a href="{{ url_for('items.borrow') }}" class="btn btn-outline-custom btn-sm">
+          <i class="bi bi-arrow-repeat me-1"></i> Borrow Items
+        </a>
+        <a href="{{ url_for('items.sell') }}" class="btn btn-outline-custom btn-sm">
+          <i class="bi bi-tag-fill me-1"></i> Buy & Sell
+        </a>
+        <a href="{{ url_for('items.browse') }}" class="btn btn-primary-custom btn-sm">
+          View All <i class="bi bi-arrow-right ms-1"></i>
+        </a>
+      </div>
+    </div>
+
+    {% if recent_items %}
+      <div class="row g-3">
+        {% for item in recent_items %}
+          <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6">
+            <div class="card card-custom h-100 overflow-hidden d-flex flex-column position-relative">
+              {% if current_user.is_authenticated %}
+                <a href="{{ url_for('items.toggle_wishlist', item_id=item.id) }}" class="btn btn-sm btn-light position-absolute top-0 end-0 m-2 rounded-circle shadow-sm p-1 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; z-index: 2;" title="Bookmark">
+                  <i class="bi {% if item.id in user_wishlist_ids %}bi-heart-fill text-danger{% else %}bi-heart text-muted{% endif %}"></i>
+                </a>
+              {% endif %}
+
+              <a href="{{ url_for('items.item_details', item_id=item.id) }}">
+                <div style="height: 170px; background-color: #f1f5f9; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                  <img src="{{ item.primary_image_url }}" alt="{{ item.title }}" class="w-100 h-100" style="object-fit: cover;" onerror="this.onerror=null;this.src='{{ url_for('static', filename='images/item_placeholder.svg') }}';">
+                </div>
+              </a>
+
+              <div class="card-body p-3 d-flex flex-column flex-grow-1">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="badge {% if item.listing_type == 'borrow' %}badge-borrow{% elif item.listing_type == 'sell' %}badge-sell{% else %}badge-both{% endif %} small">
+                    {{ item.listing_type|capitalize }}
+                  </span>
+                  <span class="badge bg-light text-secondary border small">{{ item.condition }}</span>
+                </div>
+
+                <h6 class="fw-bold mb-1">
+                  <a href="{{ url_for('items.item_details', item_id=item.id) }}" class="text-dark text-decoration-none text-truncate d-block">
+                    {{ item.title }}
+                  </a>
+                </h6>
+
+                <div class="small text-muted mb-2 d-flex align-items-center gap-2">
+                  <span><i class="bi {{ item.category.icon }} text-teal me-1"></i>{{ item.category.name }}</span>
+                  <span>&bull;</span>
+                  <span class="text-truncate" style="max-width: 100px;">{{ item.location }}</span>
+                </div>
+
+                <div class="p-2 bg-light rounded-2 mb-3 mt-auto">
+                  <div class="d-flex justify-content-between align-items-center small">
+                    {% if item.listing_type in ('borrow', 'both') %}
+                      <div>
+                        <span class="text-muted" style="font-size: 0.72rem;">Borrow:</span>
+                        <span class="fw-bold text-teal d-block">
+                          {% if item.borrowing_fee > 0 %}₹{{ item.borrowing_fee|int }}/d{% else %}Free{% endif %}
+                        </span>
+                      </div>
+                    {% endif %}
+                    {% if item.listing_type in ('sell', 'both') and item.selling_price %}
+                      <div class="text-end">
+                        <span class="text-muted" style="font-size: 0.72rem;">Buy:</span>
+                        <span class="fw-bold text-dark d-block">₹{{ item.selling_price|int }}</span>
+                      </div>
+                    {% endif %}
+                  </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                  <div class="d-flex align-items-center gap-2">
+                    <img src="{{ item.owner.avatar_url }}" alt="{{ item.owner.full_name }}" class="avatar-sm" style="width: 24px; height: 24px;">
+                    <span class="small text-muted text-truncate" style="max-width: 80px;">{{ item.owner.full_name.split(' ')[0] }}</span>
+                  </div>
+                  <a href="{{ url_for('items.item_details', item_id=item.id) }}" class="btn btn-sm btn-outline-custom py-1 px-2" style="font-size: 0.78rem;">
+                    Details <i class="bi bi-chevron-right ms-1"></i>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="card card-custom p-4 text-center">
+        <p class="text-muted mb-0">No listings posted yet. Be the first to share!</p>
+      </div>
+    {% endif %}
+  </div>
+</section>
+
+<!-- How It Works Section -->
+<section class="py-5 bg-white">
+  <div class="container">
+    <div class="text-center mb-5">
+      <span class="badge bg-teal-subtle text-teal fw-bold text-uppercase px-3 py-2 mb-2" style="letter-spacing: 1px;">Workflow</span>
+      <h2 class="fw-bold text-dark">How {{ site_name }} Works</h2>
+      <p class="text-muted small">Three clear, secure steps to share resources across campus</p>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="card card-custom p-4 h-100 text-center">
+          <div class="category-icon mx-auto mb-3" style="width: 60px; height: 60px; font-size: 1.75rem;">
+            <i class="bi bi-search"></i>
+          </div>
+          <h5 class="fw-bold text-dark mb-2">1. Find or List Items</h5>
+          <p class="text-muted small mb-0">
+            Search items to borrow for a few days or buy permanently. Listing an item takes under 60 seconds with category recommendations.
+          </p>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="card card-custom p-4 h-100 text-center">
+          <div class="category-icon mx-auto mb-3" style="width: 60px; height: 60px; font-size: 1.75rem;">
+            <i class="bi bi-qr-code-scan"></i>
+          </div>
+          <h5 class="fw-bold text-dark mb-2">2. Secure Handover</h5>
+          <p class="text-muted small mb-0">
+            Meet safely on campus. Verify item custody using cryptographic tokens and confirmed transaction records.
+          </p>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="card card-custom p-4 h-100 text-center">
+          <div class="category-icon mx-auto mb-3" style="width: 60px; height: 60px; font-size: 1.75rem;">
+            <i class="bi bi-shield-check"></i>
+          </div>
+          <h5 class="fw-bold text-dark mb-2">3. Return & Build Trust</h5>
+          <p class="text-muted small mb-0">
+            Confirm returns on time. Rate your experience and build an audited TrustScore recognized by your campus peers.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Community Impact / Key Highlights Preview -->
+<section class="py-5 bg-main border-top">
+  <div class="container">
+    <div class="row g-4 align-items-center">
+      <div class="col-lg-6">
+        <span class="badge bg-teal-subtle text-teal fw-bold text-uppercase px-3 py-2 mb-2">Why EasyShare?</span>
+        <h2 class="fw-bold text-dark mb-3">Designed Exclusively for Campus Needs</h2>
+        <p class="text-muted mb-4">
+          Students regularly spend hundreds of rupees or dollars each semester on single-use items: semester books, lab goggles, drafting kits, calculators, and cables. EasyShare provides a dedicated space to borrow or buy secondhand with verified peers.
+        </p>
+
+        <div class="d-flex flex-column gap-3">
+          <div class="d-flex align-items-start gap-3">
+            <div class="brand-badge flex-shrink-0" style="width: 36px; height: 36px;">
+              <i class="bi bi-calendar-check"></i>
+            </div>
+            <div>
+              <h6 class="fw-bold mb-1">Smart Availability Calendar</h6>
+              <p class="small text-muted mb-0">Atomic date booking ensures zero double-bookings or conflicting sale reservations.</p>
+            </div>
+          </div>
+
+          <div class="d-flex align-items-start gap-3">
+            <div class="brand-badge flex-shrink-0" style="width: 36px; height: 36px;">
+              <i class="bi bi-shield-lock"></i>
+            </div>
+            <div>
+              <h6 class="fw-bold mb-1">Single-Use Handover Verification</h6>
+              <p class="small text-muted mb-0">Hashed verification tokens prevent fraud and guarantee proof of custody on return.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="card card-custom p-4 bg-light border-0 shadow-sm">
+          <h5 class="fw-bold text-dark mb-3"><i class="bi bi-bar-chart-fill text-teal me-2"></i> Community Impact (Estimates)</h5>
+          <div class="row g-3 text-center mb-3">
+            <div class="col-6">
+              <div class="p-3 bg-white rounded-3 border">
+                <div class="fs-3 fw-bold text-teal">{{ user_count }}</div>
+                <div class="small text-muted">Registered Users</div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="p-3 bg-white rounded-3 border">
+                <div class="fs-3 fw-bold text-success">{{ item_count }}</div>
+                <div class="small text-muted">Total Items Listed</div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="p-3 bg-white rounded-3 border">
+                <div class="fs-3 fw-bold text-warning">₹{{ (item_count * 850 + 4500)|int }}</div>
+                <div class="small text-muted">Est. Money Saved</div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="p-3 bg-white rounded-3 border">
+                <div class="fs-3 fw-bold text-info">{{ (item_count * 3.4 + 12)|round(1) }} kg</div>
+                <div class="small text-muted">Est. Waste Diverted</div>
+              </div>
+            </div>
+          </div>
+          <div class="small text-muted text-center">
+            * Estimates based on average retail vs. borrowing cost ratios and campus reuse calculations.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

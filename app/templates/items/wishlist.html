@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}My Saved Wishlist{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+    <div>
+      <h3 class="fw-bold text-dark mb-1"><i class="bi bi-heart-fill text-danger me-2"></i> My Saved Wishlist</h3>
+      <p class="text-muted small mb-0">Items you've bookmarked to borrow or buy later</p>
+    </div>
+    <a href="{{ url_for('items.browse') }}" class="btn btn-outline-custom btn-sm">
+      <i class="bi bi-grid me-1"></i> Browse More Items
+    </a>
+  </div>
+
+  {% if items %}
+    <div class="row g-3">
+      {% for item in items %}
+        <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6">
+          <div class="card card-custom h-100 overflow-hidden d-flex flex-column position-relative">
+            <a href="{{ url_for('items.toggle_wishlist', item_id=item.id) }}" class="btn btn-sm btn-light position-absolute top-0 end-0 m-2 rounded-circle shadow-sm p-1 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; z-index: 2;" title="Remove from Wishlist">
+              <i class="bi bi-x-lg text-danger"></i>
+            </a>
+
+            <a href="{{ url_for('items.item_details', item_id=item.id) }}">
+              <img src="{{ item.primary_image_url }}" alt="{{ item.title }}" class="w-100" style="height: 160px; object-fit: cover;" onerror="this.onerror=null;this.src='{{ url_for('static', filename='images/item_placeholder.svg') }}';">
+            </a>
+
+            <div class="card-body p-3 d-flex flex-column flex-grow-1">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="badge {% if item.listing_type == 'borrow' %}badge-borrow{% elif item.listing_type == 'sell' %}badge-sell{% else %}badge-both{% endif %} small">
+                  {{ item.listing_type|capitalize }}
+                </span>
+                <span class="badge bg-light text-secondary border small">{{ item.condition }}</span>
+              </div>
+
+              <h6 class="fw-bold mb-1">
+                <a href="{{ url_for('items.item_details', item_id=item.id) }}" class="text-dark text-decoration-none text-truncate d-block">
+                  {{ item.title }}
+                </a>
+              </h6>
+              <div class="small text-muted mb-2">{{ item.category.name }} &bull; {{ item.location }}</div>
+
+              <div class="mt-auto pt-2 d-flex justify-content-between align-items-center border-top">
+                <span class="fw-bold text-teal small">
+                  {% if item.listing_type in ('sell', 'both') and item.selling_price %}
+                    ₹{{ item.selling_price|int }}
+                  {% elif item.borrowing_fee > 0 %}
+                    ₹{{ item.borrowing_fee|int }}/day
+                  {% else %}
+                    Free Borrow
+                  {% endif %}
+                </span>
+                <a href="{{ url_for('items.item_details', item_id=item.id) }}" class="btn btn-sm btn-outline-custom py-1 px-2" style="font-size: 0.8rem;">
+                  View Listing
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="card card-custom p-5 text-center">
+      <i class="bi bi-heart fs-1 text-muted mb-3"></i>
+      <h5 class="fw-bold text-dark">Your Wishlist is Empty</h5>
+      <p class="text-muted small mb-4">You haven't saved any items yet. Click the heart icon on any listing to bookmark it.</p>
+      <a href="{{ url_for('items.browse') }}" class="btn btn-primary-custom btn-sm mx-auto">
+        <i class="bi bi-search me-1"></i> Explore Campus Catalog
+      </a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

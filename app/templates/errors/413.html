@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}File Too Large (413){% endblock %}
+
+{% block content %}
+<div class="container py-5 text-center">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card card-custom p-5">
+        <div class="category-icon mx-auto mb-3 text-warning bg-warning-subtle" style="width: 70px; height: 70px; font-size: 2rem;">
+          <i class="bi bi-file-earmark-arrow-up"></i>
+        </div>
+        <h2 class="fw-bold text-dark mb-2">File Upload Too Large (413)</h2>
+        <p class="text-muted mb-4">The file you attempted to upload exceeds our maximum limit of 16 MB. Please compress or select a smaller image.</p>
+        <div>
+          <a href="{{ url_for('auth.profile') }}" class="btn btn-primary-custom">
+            <i class="bi bi-arrow-left me-1"></i> Return to Profile
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}My Notifications{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8 col-md-10">
+      <div class="card card-custom p-4 border-0 shadow-sm">
+        <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+          <div class="d-flex align-items-center gap-2">
+            <div class="brand-badge" style="width: 40px; height: 40px;">
+              <i class="bi bi-bell-fill fs-5"></i>
+            </div>
+            <div>
+              <h4 class="fw-bold text-dark mb-0">Notifications</h4>
+              <p class="text-muted small mb-0">Real-time alerts for your borrow and sale activities</p>
+            </div>
+          </div>
+          {% if notifications %}
+            <form action="{{ url_for('main.mark_all_notifications_read') }}" method="POST">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-check2-all me-1"></i> Mark All as Read
+              </button>
+            </form>
+          {% endif %}
+        </div>
+
+        {% if notifications %}
+          <div class="list-group list-group-flush">
+            {% for notice in notifications %}
+              <div class="list-group-item px-3 py-3 border rounded-3 mb-2 {% if not notice.is_read %}bg-light border-teal{% endif %}">
+                <div class="d-flex justify-content-between align-items-start gap-2">
+                  <div class="d-flex gap-3">
+                    <div class="mt-1">
+                      {% if notice.notification_type == 'borrow_request' %}
+                        <i class="bi bi-arrow-repeat text-teal fs-4"></i>
+                      {% elif notice.notification_type in ('purchase_request', 'offer') %}
+                        <i class="bi bi-tag-fill text-warning fs-4"></i>
+                      {% else %}
+                        <i class="bi bi-info-circle-fill text-primary fs-4"></i>
+                      {% endif %}
+                    </div>
+                    <div>
+                      <div class="d-flex align-items-center gap-2">
+                        <h6 class="fw-bold text-dark mb-1">{{ notice.title }}</h6>
+                        {% if not notice.is_read %}
+                          <span class="badge bg-danger rounded-pill" style="font-size: 0.65rem;">New</span>
+                        {% endif %}
+                      </div>
+                      <p class="small text-secondary mb-2">{{ notice.message }}</p>
+                      <div class="small text-muted" style="font-size: 0.75rem;">
+                        <i class="bi bi-clock me-1"></i> {{ notice.created_at.strftime('%b %d, %Y at %I:%M %p') }}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="flex-shrink-0">
+                    {% if not notice.is_read %}
+                      <form action="{{ url_for('main.mark_notification_read', notification_id=notice.id) }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-sm btn-outline-custom py-1 px-2" style="font-size: 0.78rem;">
+                          Mark Read <i class="bi bi-check2"></i>
+                        </button>
+                      </form>
+                    {% elif notice.link %}
+                      <a href="{{ notice.link }}" class="btn btn-sm btn-light py-1 px-2 border" style="font-size: 0.78rem;">
+                        Open <i class="bi bi-arrow-right"></i>
+                      </a>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-center py-5 bg-light rounded-3">
+            <i class="bi bi-bell-slash fs-1 text-muted mb-2 d-block"></i>
+            <h6 class="fw-bold text-dark">No Notifications Yet</h6>
+            <p class="small text-muted mb-0">When other members request your items or send offers, they will appear here.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

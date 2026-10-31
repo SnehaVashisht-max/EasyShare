@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}About EasyShare{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-9 col-md-11">
+      <div class="card card-custom p-4 p-md-5 mb-4">
+        <div class="d-flex align-items-center gap-3 mb-4">
+          <span class="brand-badge" style="width: 52px; height: 52px;"><i class="bi bi-recycle fs-3"></i></span>
+          <div>
+            <h2 class="fw-bold mb-0 text-dark">{{ site_name }}</h2>
+            <div class="text-teal fw-semibold">{{ site_tagline }}</div>
+          </div>
+        </div>
+
+        <p class="lead text-secondary mb-4">
+          EasyShare (ShareShelf AI) is an intelligent, eco-friendly campus sharing and secondhand exchange platform created to help students, faculty, and local communities borrow, lend, and sell reusable items.
+        </p>
+
+        <hr class="my-4">
+
+        <h4 class="fw-bold text-dark mb-3">Our Mission</h4>
+        <p class="text-muted">
+          College life often requires items for brief intervals: an expensive graphing calculator during exam week, specific lab equipment for a single semester, or sports accessories on weekends. Instead of requiring students to purchase brand-new items that later sit idle in dorm rooms or end up in landfills, EasyShare bridges students with peers who already own these resources.
+        </p>
+
+        <h4 class="fw-bold text-dark mt-4 mb-3" id="trustscore">The TrustScore Philosophy</h4>
+        <p class="text-muted">
+          Campus sharing requires mutual confidence. EasyShare calculates an objective, transparent TrustScore based on:
+        </p>
+        <ul class="text-muted mb-4">
+          <li><strong>Successful Handover & Completion (30%):</strong> Consistent track record of successful transactions.</li>
+          <li><strong>Punctual Returns (30%):</strong> Returning borrowed items on or before the due date.</li>
+          <li><strong>Community Reviews & Ratings (25%):</strong> Authentic feedback from verified exchange partners.</li>
+          <li><strong>Adherence to Guidelines (15%):</strong> Minimal cancellations and zero reported honor-code violations.</li>
+        </ul>
+
+        <div class="alert alert-light border small text-muted mb-4">
+          <i class="bi bi-shield-check text-success me-1"></i>
+          <strong>Transparency Note:</strong> TrustScores are computed strictly on completed transactions and cannot be altered or fabricated. Reviews are accepted only once a QR-confirmed return or sale occurs.
+        </div>
+
+        <h4 class="fw-bold text-dark mt-4 mb-3" id="guidelines">Campus Honor Code</h4>
+        <p class="text-muted">
+          All members agree to maintain items in their original condition, communicate respectfully, show up on time for QR exchanges, and return items clean and undamaged.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

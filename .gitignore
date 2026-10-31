@@ -1,0 +1,37 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.env
+
+# Database
+*.sqlite
+*.sqlite3
+*.db
+instance/
+
+# Uploads (ignore user content but keep folder structure via .gitkeep)
+app/static/uploads/profiles/*
+!app/static/uploads/profiles/.gitkeep
+app/static/uploads/items/*
+!app/static/uploads/items/.gitkeep
+
+# IDEs & OS files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+Thumbs.db
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
